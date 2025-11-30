@@ -67,11 +67,13 @@
                 $find -> execute([':uid' => $userID]);
                 $row = $find -> fetch(PDO::FETCH_ASSOC);
 
-                $basketID = (int)$row['ID'];
-                $raw = $row['Goods'] ?? '[]';
-                $arr = json_decode($raw, true);
+                $arr = [];
 
                 if ($row) {
+                    $basketID = (int)$row['ID'];
+                    $raw = $row['Goods'] ?? '[]';
+                    $arr = json_decode($raw, true);
+
                     if (!is_array($arr)) { 
                         $arr = [];
                     }
@@ -94,7 +96,12 @@
                 }
                 else {
                     // нет open корзины, то создаём новую запись с одним элементом "SKU:1"
-                    $arr[$goods -> getSKU()] += $steep;
+                    if (isset($arr[$goods -> getSKU()])) {
+                        $arr[$goods -> getSKU()] += $steep;
+                    }
+                    else {
+                        $arr[$goods -> getSKU()] = $steep;
+                    }
                     $ins = $this -> pdo -> prepare("INSERT INTO Basket_User (User_ID, Status, Goods) VALUES (:uid, 'open', :goods)");
                     $ins -> execute([
                         ':uid' => $userID,
@@ -398,7 +405,7 @@
                 </table>
 
                 <section id="buttonBuy">
-                    <a href="Util.php?action=buy&grandTotal=<?= rawurlencode(sprintf('%.2f', $grandTotal)) ?>">
+                    <a href="Util.php?action=buy">
                         Купить
                     </a>
                 </section>

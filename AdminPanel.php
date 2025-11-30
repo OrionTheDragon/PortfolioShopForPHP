@@ -12,6 +12,7 @@
     require_once __DIR__ . '/Util.php';
     require_once __DIR__ . '/User.php';
     require_once __DIR__ . '/db.php';
+    require_once __DIR__ . '/PA.php';
 
     /**
      * Class AdminPanel
@@ -36,7 +37,15 @@
          */
         public function __construct(PDO $pdo) {
             // Сохраняем PDO в поле класса для дальнейшего использования.
-            $this->pdo = $pdo;
+            $this -> pdo = $pdo;
+
+            $userID = (int)$_SESSION['User_ID'];
+            
+            if (!PA::accessCheck($userID)) {
+                http_response_code(404);
+                echo 'Ошибка 404';
+                exit();
+            }
         }
 
         /**

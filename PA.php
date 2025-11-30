@@ -31,11 +31,11 @@
                 $this -> money = (float) ($_SESSION['user']['money'] ?? 0.0);
             }
 
-            $util = new Util($this -> pdo);
-
-            // $fresh = $util->getUserData($pdo, $this -> id);
-
             $this -> user = new User($this -> id, $this -> name, '', $this -> money);
+            if ($this -> user) {
+                $this -> getUserMoney();
+                include'PA.phtml';
+            }
         }
 
         public function getUser(): User { 
@@ -54,25 +54,19 @@
             $this -> money = $mone;
         }
 
-        public function getUserMoney(PA $pa) : void {
+        public function getUserMoney() : void {
             $stmt = $this -> pdo -> prepare("SELECT Money FROM User_data WHERE ID = :id");
-            $stmt -> execute([':id' => $pa -> getId()]);
+            $stmt -> execute([':id' => $this -> getId()]);
             $row = $stmt -> fetch(PDO::FETCH_ASSOC);
 
-            $pa -> setMoney((float)$row['Money']);
+            $this -> setMoney((float)$row['Money']);
         }
 
-        public function accessCheck(PA $pa) : bool {
-            $stmt = $this -> pdo -> prepare("SELECT Access FROM User_data WHERE ID = :id");
-            $stmt -> execute([':id' => $pa -> getId()]);
+        public static function accessCheck($ID) : bool {
+            global $pdo;
+            $stmt = $pdo -> prepare("SELECT Access FROM User_data WHERE ID = :id");
+            $stmt -> execute([':id' => $ID]);
             $row = $stmt -> fetch(PDO::FETCH_ASSOC);
-
-            // if ($row['Access'] === 'admin') {
-            //     return true;
-            // }
-            // else {
-            //     return false;
-            // }
 
             if (!$row) {
                 return false;
@@ -82,58 +76,9 @@
         }
     }
 
-    $pa = new PA($pdo);
+    // var_dump($_SERVER); exit;
 
-    $pa -> getUserMoney($pa);
+    if (str_contains($_SERVER['REQUEST_URI'], '/PA.php')) {
+        $pa = new PA($pdo);
+    }
 ?>
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Магазин драконьих товаров</title>
-    </head>
-    <body>
-        <main class="basic">
-            <h1>ЛК</h1>
-            <section id="head_pole">
-                <ul>
-                    <li>
-                        <?= htmlspecialchars("Имя пользователя: " . $pa -> getName()) ?><br>
-                        <?= htmlspecialchars("Деньги пользователя: " . $pa -> getMoney()) ?>
-                    </li>
-                </ul>
-            </section>
-            <section id="backShop">
-                <a href="Shop.php">
-                    Назад в магазин
-                </a>
-            </section>
-            <section id="openBasket">
-                <a href="Basket.php" target="_blank" rel="noopener noreferrer">
-                    Открыть корзину
-                </a>
-            </section>
-            <section id="openHustory">
-                <a href="History.php" target="_blank" rel="noopener noreferrer">
-                    История
-                </a>
-            </section>
-            <?php
-                $check = $pa -> accessCheck($pa);
-                if ($check) {
-                    echo "<section id='adminPanel'>
-                            <a href='AdminPanel.php'>
-                                Админ панель
-                            </a>
-                          </section>";
-                }
-            ?>
-            <section id="exit">
-                <a href="Util.php?action=logout">
-                    Выход
-                </a>
-            </section>
-        </main>
-    </body>
-</html>

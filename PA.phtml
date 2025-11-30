@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Магазин драконьих товаров</title>
+    </head>
+    <body>
+        <main class="basic">
+            <h1>ЛК</h1>
+            <section id="head_pole">
+                <ul>
+                    <li>
+                        <?= htmlspecialchars("Имя пользователя: " . $this -> getName()) ?><br>
+                        <?= htmlspecialchars("Деньги пользователя: " . $this -> getMoney()) ?>
+                    </li>
+                </ul>
+            </section>
+            <section id="backShop">
+                <a href="Shop.php">
+                    Назад в магазин
+                </a>
+            </section>
+            <section id="openBasket">
+                <a href="Basket.php" target="_blank" rel="noopener noreferrer">
+                    Открыть корзину
+                </a>
+            </section>
+            <section id="openHustory">
+                <a href="History.php" target="_blank" rel="noopener noreferrer">
+                    История
+                </a>
+            </section>
+            <?php
+                $check = PA::accessCheck($this -> getId());
+                if ($check) {
+                    echo "<section id='adminPanel'>
+                            <a href='AdminPanel.php'>
+                                Админ панель
+                            </a>
+                          </section>";
+                }
+            ?>
+            <section id="exit">
+                <a href="Util.php?action=logout">
+                    Выход
+                </a>
+            </section>
+        </main>
+    </body>
+</html>

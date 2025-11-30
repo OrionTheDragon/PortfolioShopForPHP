@@ -20,6 +20,7 @@
     </head>
     <body>
         <?php
+        require __DIR__ . '/db.php';
         $action = $_POST['action'] ?? '';
         $showSub = $action !== '';
         ?>
@@ -27,10 +28,19 @@
         <main class="basic">
             <?php if (!$showSub): ?>
                 <h1>Магазин</h1>
+                <?php if (isset($_GET['success'])): ?>
+                    <?php  
+                        $stmt = $pdo -> prepare("SELECT `productName` FROM `Goods1` WHERE `SKU` = :uid LIMIT 1");
+                        $stmt -> execute([':uid' => $_GET['success']]);
+                        $row = $stmt -> fetch(PDO::FETCH_ASSOC);
+
+                        if ($row) {
+                            echo '<h5>Добавлен товар:' . $row['productName'] . '</h5>';
+                        }
+                    ?>
+                <?php endif; ?>
                 <section id="">
                     <?php  
-                    require __DIR__ . '/db.php';
-
                     $categoryId = $_GET['category'] ?? null;
                     $SKUs = $_GET['SKU'] ?? null;
 
@@ -73,7 +83,7 @@
                                       '<a href="Util.php?action=addproduct&SKU=' . $prod['SKU'] . '&step=' . $step .'">+</a> </li>';
                         }
                         echo '</ul>';
-                        echo '<a href="shop.php">Назад в магазин</a>';
+                        echo '<a href="Shop.php">Назад в магазин</a>';
                     }
                 ?>
                 </section>

@@ -170,7 +170,7 @@
         public function loadSQL($name, $password) : void {
             try {
                 $sql = 'SELECT `Password` FROM `User_data` WHERE `Name` = :name LIMIT 1';
-                $stmt = $this -> pdo->prepare($sql);
+                $stmt = $this -> pdo -> prepare($sql);
                 $stmt->execute([':name' => $name]);
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -195,12 +195,12 @@
         public function removSQL() : void {
             try {
                 $stmt = $this -> pdo -> prepare('UPDATE Goods1 SET category = :new WHERE category = :old');
-                $stmt->execute([':new' => "0", ':old' => "BREAD"]);
-                $stmt->execute([':new' => "1", ':old' => "DRINKS"]);
-                $stmt->execute([':new' => "2", ':old' => "GROCERY"]);
-                $stmt->execute([':new' => "3", ':old' => "MEAT"]);
-                $stmt->execute([':new' => "4", ':old' => "MILK"]);
-                $stmt->execute([':new' => "5", ':old' => "VEGETABLES"]);
+                $stmt -> execute([':new' => "0", ':old' => "BREAD"]);
+                $stmt -> execute([':new' => "1", ':old' => "DRINKS"]);
+                $stmt -> execute([':new' => "2", ':old' => "GROCERY"]);
+                $stmt -> execute([':new' => "3", ':old' => "MEAT"]);
+                $stmt -> execute([':new' => "4", ':old' => "MILK"]);
+                $stmt -> execute([':new' => "5", ':old' => "VEGETABLES"]);
                 echo $stmt->rowCount() . " строк(и) изменено.";
             }
             catch (Exception $e) {
@@ -269,11 +269,11 @@
             ];
         }
 
-        public function buyBasketUser(int $userID, float $grandTotal) : void {
+        public function buyBasketUser(int $userID) : void {
             try {
                 $this -> pdo -> beginTransaction();
 
-                $stmt = $this -> pdo -> prepare("SELECT ID FROM Basket_User WHERE User_ID = :uid AND Status = 'open' ORDER BY ID DESC LIMIT 1");
+                $stmt = $this -> pdo -> prepare("SELECT ID, Goods, `Status` FROM Basket_User WHERE User_ID = :uid AND Status = 'open' ORDER BY ID DESC LIMIT 1");
                 $stmt -> execute([':uid' => $userID]);
                 $row = $stmt -> fetch(PDO::FETCH_ASSOC);
 
@@ -286,8 +286,24 @@
                     return;
                 }
 
+                $grandTotal = 0;
+
+                if ($row["Status"] === 'open') {
+                    $items_json = json_decode($row['Goods'], true);
+                    $keySKU = array_keys($items_json);
+
+                    $placeholders = rtrim(str_repeat('?,', count($keySKU)), ',');
+                    $stmtG = $this -> pdo -> prepare("SELECT `SKU`, `price` FROM Goods1 WHERE `SKU` IN ($placeholders)");
+                    $stmtG -> execute($keySKU);
+                    $rowG = $stmtG -> fetchAll(PDO::FETCH_ASSOC);
+
+                    foreach ($rowG as $item) {
+                        $grandTotal += $item['price'] * $items_json[$item['SKU']];
+                    }
+                }
+
                 if ($row1['Money'] < $grandTotal) { 
-                    $_SESSION['flash_error'] = 'Не удалось оформить заказ, недостаточно средств';
+                    echo 'Не удалось оформить заказ, недостаточно средств';
                     $this -> pdo -> rollBack();
                     exit;
                 }
@@ -408,7 +424,7 @@
                 header('Location: Shop.php');
             } 
             else {
-                header('Location: Shop.php?category=' . rawurlencode($category));
+                header('Location: Shop.php?category=' . rawurlencode($category) . '&success=' . $goodsSKU);
             }
             exit;
             break;
@@ -422,14 +438,14 @@
 
             $data = $util -> buyBasketUser($userID, $grandTotalFromGet);
 
-            header('Location: basket.php');
+            header('Location: Basket.php');
             exit;
             break;
 
         case 'clear':
             $data = $util -> clearBasket($userID);
 
-            header('Location: basket.php');
+            header('Location: Basket.php');
             exit;
             break;
 
